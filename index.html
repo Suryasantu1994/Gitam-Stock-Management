@@ -621,7 +621,7 @@ body.role-user  .user-hidden{display:none!important;}
             <th class="num bldg-th"><span>South</span><span>Girls H.</span></th>
             <th class="num bldg-th"><span>Guest</span><span>House</span></th>
             <th class="num bldg-th"><span>Garden</span></th>
-            <th class="num">Total Issued</th><th class="num">Balance</th><th>Status</th><th>Edit</th>
+            <th class="num">Total Issued</th><th class="num">Balance</th><th>Status</th><th class="num">Stock Order</th><th class="num" id="chem-order-val-th">Order Value (₹)</th><th>Edit</th>
           </tr></thead>
           <tbody id="chem-body"></tbody>
         </table></div>
@@ -671,7 +671,8 @@ body.role-user  .user-hidden{display:none!important;}
             <th class="num bldg-th"><span>North</span><span>Boys H.</span></th>
             <th class="num bldg-th"><span>South</span><span>Girls H.</span></th>
             <th class="num bldg-th"><span>Guest</span><span>House</span></th>
-            <th class="num">Total Issued</th><th class="num">Balance</th><th>Status</th><th>Edit</th>
+            <th class="num bldg-th"><span>Garden</span></th>
+            <th class="num">Total Issued</th><th class="num">Balance</th><th>Status</th><th class="num">Stock Order</th><th class="num" id="tools-order-val-th">Order Value (₹)</th><th>Edit</th>
           </tr></thead>
           <tbody id="tools-body"></tbody>
         </table></div>
@@ -802,7 +803,7 @@ body.role-user  .user-hidden{display:none!important;}
           <table class="issue-table">
             <thead><tr>
               <th>#</th><th>Item Name</th><th>Category</th><th>UOM</th>
-              <th class="num">Opening</th><th class="num">Total Issued</th><th class="num">Balance</th>
+              <th class="num">Opening</th><th class="num">Balance</th><th class="num">Total Issued</th>
               <th class="num">Issue Qty</th><th class="num">After Issue</th><th>Status After</th>
             </tr></thead>
             <tbody id="iss-table-body"></tbody>
@@ -1231,11 +1232,23 @@ function renderChemicals(data){
       <td class="num" style="font-weight:700;color:${c.balance<0?'var(--danger)':c.balance<=5?'var(--warning)':'var(--primary)'}">${fmt(c.balance)}</td>
       <td><span class="status ${s}">${statusLabel(s)}</span></td>
       <td style="white-space:nowrap">
+        <input type="number" min="0" class="stock-order-input" value="${c.stockOrder||''}" placeholder="Qty"
+          title="Enter required stock order quantity"
+          onchange="saveStockOrder('chem',${c.id},this.value)"
+          style="width:72px;padding:5px 7px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;text-align:center;color:var(--text-dark);background:var(--white);transition:border-color .2s;"
+          onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(11,82,64,.08)'"
+          onblur="this.style.borderColor='var(--sand-dark)';this.style.boxShadow='none'">
+      </td>
+      <td class="num" style="font-weight:700;color:var(--primary)">${c.stockOrder>0?fmtR((c.stockOrder||0)*(c.rate||0)):'—'}</td>
+      <td style="white-space:nowrap">
         <button class="edit-stock-btn" onclick="openEditModal('chem',${c.id})" title="Edit Opening Stock">✏️</button>
         <button class="edit-stock-btn admin-only" onclick="deleteStock('chem',${c.id})" title="Delete Item" style="background:#fde8e8;color:var(--danger);border-color:#f5b7b1;margin-left:4px">🗑️</button>
       </td>
     </tr>`;
   }).join('');
+  const chemTotalOrderVal = data.reduce((s,c)=>s+((c.stockOrder||0)*(c.rate||0)),0);
+  const chemOrderValTh = document.getElementById('chem-order-val-th');
+  if(chemOrderValTh) chemOrderValTh.innerHTML = 'Order Value (₹)' + (chemTotalOrderVal>0?`<div style="font-size:.72rem;font-weight:600;color:var(--gold-light);margin-top:2px">${fmtR(chemTotalOrderVal)}</div>`:'');
   document.getElementById('chem-count').textContent=`${data.length} items`;
 }
 
@@ -1254,12 +1267,45 @@ function renderTools(data){
       <td class="num" style="font-weight:700;color:${t.balance<0?'var(--danger)':t.balance<=2?'var(--warning)':'var(--primary)'}">${fmt(t.balance)}</td>
       <td><span class="status ${s}">${statusLabel(s)}</span></td>
       <td style="white-space:nowrap">
+        <input type="number" min="0" class="stock-order-input" value="${t.stockOrder||''}" placeholder="Qty"
+          title="Enter required stock order quantity"
+          onchange="saveStockOrder('tool',${t.id},this.value)"
+          style="width:72px;padding:5px 7px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;text-align:center;color:var(--text-dark);background:var(--white);transition:border-color .2s;"
+          onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(11,82,64,.08)'"
+          onblur="this.style.borderColor='var(--sand-dark)';this.style.boxShadow='none'">
+      </td>
+      <td class="num" style="font-weight:700;color:var(--primary)">${t.stockOrder>0?fmtR((t.stockOrder||0)*(t.rate||0)):'—'}</td>
+      <td style="white-space:nowrap">
         <button class="edit-stock-btn" onclick="openEditModal('tool',${t.id})" title="Edit Opening Stock">✏️</button>
         <button class="edit-stock-btn admin-only" onclick="deleteStock('tool',${t.id})" title="Delete Item" style="background:#fde8e8;color:var(--danger);border-color:#f5b7b1;margin-left:4px">🗑️</button>
       </td>
     </tr>`;
   }).join('');
+  const toolTotalOrderVal = data.reduce((s,t)=>s+((t.stockOrder||0)*(t.rate||0)),0);
+  const toolOrderValTh = document.getElementById('tools-order-val-th');
+  if(toolOrderValTh) toolOrderValTh.innerHTML = 'Order Value (₹)' + (toolTotalOrderVal>0?`<div style="font-size:.72rem;font-weight:600;color:var(--gold-light);margin-top:2px">${fmtR(toolTotalOrderVal)}</div>`:'');
   document.getElementById('tools-count').textContent=`${data.length} items`;
+}
+
+
+// ============================================================
+// SAVE STOCK ORDER
+// ============================================================
+async function saveStockOrder(type, id, val){
+  const arr  = type==='chem' ? chemicals : tools;
+  const item = arr.find(x=>x.id===id);
+  if(!item) return;
+  const qty = parseInt(val,10);
+  item.stockOrder = isNaN(qty)||qty<0 ? 0 : qty;
+  try{
+    await fbSaveItem(type, item);
+    if(type==='chem') renderChemicals(chemicals);
+    else              renderTools(tools);
+    showToast('📦 Stock order saved for "'+item.name+'"');
+  } catch(e){
+    showToast('❌ Failed to save stock order', true);
+    console.error(e);
+  }
 }
 
 // ============================================================
@@ -2492,14 +2538,16 @@ function exportCSV(type){
 function exportStockCSV(data, label){
   const hdr = ['#','Item Name','UOM','Opening Qty','Rate (Rs)','Total Value (Rs)',
     'AB1-Vishvesvaraya','AB2-Shivaji','VS+SQ','NBH-North Boys','SBH-South Girls','GH-Guest House','Garden',
-    'Total Issued','Balance','Status'];
+    'Total Issued','Balance','Status','Stock Order','Order Value (Rs)'];
   const rows = [csvRow(hdr)];
   data.forEach((item,i)=>{
+    const orderVal = (item.stockOrder||0)*(item.rate||0);
     rows.push(csvRow([
       i+1, item.name, item.uom, item.opening, item.rate, item.totalValue,
       item.issued.AB1||0, item.issued.AB2||0, item.issued.VS||0,
       item.issued.NBH||0, item.issued.SBH||0, item.issued.GH||0, item.issued.Garden||0,
-      item.totalIssued, item.balance, statusLabel(getStatus(item))
+      item.totalIssued, item.balance, statusLabel(getStatus(item)),
+      item.stockOrder||0, orderVal
     ]));
   });
   // Totals row
@@ -2510,7 +2558,9 @@ function exportStockCSV(data, label){
     data.reduce((s,i)=>s+(i.issued.SBH||0),0), data.reduce((s,i)=>s+(i.issued.GH||0),0),
     data.reduce((s,i)=>s+(i.issued.Garden||0),0),
     data.reduce((s,i)=>s+i.totalIssued,0),
-    data.reduce((s,i)=>s+i.balance,0), ''
+    data.reduce((s,i)=>s+i.balance,0), '',
+    data.reduce((s,i)=>s+(i.stockOrder||0),0),
+    data.reduce((s,i)=>s+((i.stockOrder||0)*(i.rate||0)),0)
   ]));
   downloadCSV(`GITAM_${label}_${todayStr()}.csv`, rows);
   showToast(`✅ ${label} register exported`);
@@ -3055,7 +3105,8 @@ async function fbSaveItem(type, item){
     uom:         item.uom,
     rate:        item.rate,
     opening:     item.opening,
-    totalValue:  item.totalValue
+    totalValue:  item.totalValue,
+    stockOrder:  item.stockOrder||0
   });
 }
 
@@ -3080,6 +3131,7 @@ async function loadFromFirebase(){
       item.rate        = d.rate        ?? item.rate;
       item.opening     = d.opening     ?? item.opening;
       item.totalValue  = d.totalValue  ?? item.totalValue;
+      item.stockOrder  = d.stockOrder  ?? item.stockOrder ?? 0;
     }
   });
 
