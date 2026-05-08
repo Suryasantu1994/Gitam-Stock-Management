@@ -554,7 +554,7 @@ body.role-user  .user-hidden{display:none!important;}
         <div><h1>📊 Dashboard</h1><p>Stock overview across all buildings</p></div>
       </div>
       <div class="kpi-grid">
-        <div class="kpi-card c-teal"><div class="kpi-icon teal">🧪</div><div><div class="kpi-label">Total Items</div><div class="kpi-value">40</div><div class="kpi-sub">12 Chemicals · 28 Tools</div></div></div>
+        <div class="kpi-card c-teal"><div class="kpi-icon teal">🧪</div><div><div class="kpi-label">Total Items</div><div class="kpi-value" id="kpi-total-items">—</div><div class="kpi-sub" id="kpi-total-items-sub">Chemicals · Tools</div></div></div>
         <div class="kpi-card c-gold" style="cursor:pointer" onclick="openStockValueModal()" title="Click to view breakdown"><div class="kpi-icon gold">₹</div><div><div class="kpi-label">Total Stock Value</div><div class="kpi-value" id="kpi-stock-value">—</div><div class="kpi-sub">Opening inventory value ↗</div></div></div>
         <div class="kpi-card c-red"><div class="kpi-icon red">⚠️</div><div><div class="kpi-label">Low Stock Alerts</div><div class="kpi-value" id="kpi-alerts">—</div><div class="kpi-sub">Items needing reorder</div></div></div>
         <div class="kpi-card c-blue" style="cursor:pointer" onclick="openIssuedValueModal()" title="Click to view breakdown"><div class="kpi-icon blue">📦</div><div><div class="kpi-label">Total Issued Value</div><div class="kpi-value" id="kpi-issued-value">—</div><div class="kpi-sub" id="kpi-issued-units">Across all buildings ↗</div></div></div>
@@ -1560,6 +1560,9 @@ function _renderKPIs(){
     item.totalIssued = bkeys.reduce((s,k)=>s+(item.issued[k]||0),0);
     item.balance     = item.opening - item.totalIssued;
   });
+  // Total Items card
+  document.getElementById('kpi-total-items').textContent = allItems.length;
+  document.getElementById('kpi-total-items-sub').textContent = chemicals.length+' Chemicals · '+tools.length+' Tools';
   document.getElementById('kpi-alerts').textContent=allItems.filter(i=>getStatus(i)!=='ok').length;
   const stockVal=allItems.reduce((s,i)=>s+(i.opening||0)*(i.rate||0),0);
   document.getElementById('kpi-stock-value').textContent='\u20b9'+(stockVal/100000).toFixed(2)+'L';
@@ -3132,6 +3135,20 @@ async function loadFromFirebase(){
       item.opening     = d.opening     ?? item.opening;
       item.totalValue  = d.totalValue  ?? item.totalValue;
       item.stockOrder  = d.stockOrder  ?? item.stockOrder ?? 0;
+    } else {
+      // New item added dynamically (not in hardcoded data) — push it into the array
+      arr.push({
+        id:         d.id,
+        name:       d.name        || '',
+        uom:        d.uom         || '',
+        rate:       d.rate        || 0,
+        opening:    d.opening     || 0,
+        totalValue: d.totalValue  || 0,
+        issued:     d.issued      || {AB1:0,AB2:0,VS:0,NBH:0,SBH:0,GH:0,Garden:0},
+        totalIssued:d.totalIssued || 0,
+        balance:    d.balance     || 0,
+        stockOrder: d.stockOrder  || 0
+      });
     }
   });
 
