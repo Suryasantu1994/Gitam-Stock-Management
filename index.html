@@ -2067,8 +2067,22 @@ function saveNewItem(){
   arr.push({id:newId,name,uom,rate,opening,totalValue,issued,totalIssued,balance});
   // Persist to Firebase
   fbSaveItem(type, {id:newId,name,uom,rate,opening,totalValue,issued,totalIssued,balance})
-    .catch(e=>console.error('New item save error:',e));
-  if(type==='chem'){renderChemicals(chemicals);renderQuickOverview();}else{renderTools(tools);renderQuickOverview();}
+    .catch(e=>{
+      console.error('New item save error:',e);
+      showToast('\u26a0\ufe0f Item added locally but failed to save to cloud. Check connection.', true);
+    });
+  // Reset any active search/filter so the newly added item is always visible
+  if(type==='chem'){
+    document.getElementById('chem-search').value='';
+    document.getElementById('chem-status-filter').value='';
+    filterTable('chem');
+    renderQuickOverview();
+  }else{
+    document.getElementById('tools-search').value='';
+    document.getElementById('tools-status-filter').value='';
+    filterTable('tools');
+    renderQuickOverview();
+  }
   renderKPIs();renderDashboardCharts();renderAlerts();
   document.getElementById('add-success').style.display='block';
   setTimeout(()=>{document.getElementById('add-success').style.display='none';closeAddModal();},1800);
@@ -2165,8 +2179,16 @@ function saveEditItem(){
   item.totalIssued = bkeys.reduce((s,k) => s + (item.issued[k]||0), 0);
   item.balance     = opening - item.totalIssued;
 
-  // Refresh all views
-  if(type==='chem'){ renderChemicals(chemicals); } else { renderTools(tools); }
+  // Refresh all views — reset filters so edits are always visible
+  if(type==='chem'){
+    document.getElementById('chem-search').value='';
+    document.getElementById('chem-status-filter').value='';
+    filterTable('chem');
+  } else {
+    document.getElementById('tools-search').value='';
+    document.getElementById('tools-status-filter').value='';
+    filterTable('tools');
+  }
   renderQuickOverview(); renderKPIs(); renderDashboardCharts();
   renderAlerts(); renderIssuanceHistory(); renderConsumptionPct();
 
@@ -3256,6 +3278,9 @@ function showView(name,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   if(el)el.classList.add('active');
+  // Always re-render chemicals/tools table when navigating to those views
+  if(name==='chemicals') filterTable('chem');
+  else if(name==='tools') filterTable('tools');
 }
 
 // ============================================================
