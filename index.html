@@ -1219,10 +1219,10 @@ function parseDate(str){
 // ============================================================
 function renderChemicals(data){
   const tbody=document.getElementById('chem-body');
-  tbody.innerHTML=data.map(c=>{
+  tbody.innerHTML=data.map((c,idx)=>{
     const s=getStatus(c);
     return`<tr>
-      <td>${c.id}</td><td class="item-name">${c.name}</td><td>${c.uom}</td>
+      <td>${idx+1}</td><td class="item-name">${c.name}</td><td>${c.uom}</td>
       <td class="num">${fmt(c.opening)}</td><td class="num">${fmtR(c.rate)}</td><td class="num">${fmtR(c.totalValue)}</td>
       <td class="num teal-col">${c.issued.AB1||0}</td><td class="num teal-col">${c.issued.AB2||0}</td>
       <td class="num teal-col">${c.issued.VS||0}</td><td class="num teal-col">${c.issued.NBH||0}</td>
@@ -1254,10 +1254,10 @@ function renderChemicals(data){
 
 function renderTools(data){
   const tbody=document.getElementById('tools-body');
-  tbody.innerHTML=data.map(t=>{
+  tbody.innerHTML=data.map((t,idx)=>{
     const s=getStatus(t);
     return`<tr>
-      <td>${t.id}</td><td class="item-name">${t.name}</td><td>${t.uom}</td>
+      <td>${idx+1}</td><td class="item-name">${t.name}</td><td>${t.uom}</td>
       <td class="num">${fmt(t.opening)}</td><td class="num">${fmtR(t.rate)}</td><td class="num">${fmtR(t.totalValue)}</td>
       <td class="num teal-col">${t.issued.AB1||0}</td><td class="num teal-col">${t.issued.AB2||0}</td>
       <td class="num teal-col">${t.issued.VS||0}</td><td class="num teal-col">${t.issued.NBH||0}</td>
@@ -2083,7 +2083,7 @@ function saveNewItem(){
     filterTable('tools');
     renderQuickOverview();
   }
-  renderKPIs();renderDashboardCharts();renderAlerts();
+  renderKPIs();renderDashboardCharts();renderAlerts();renderBuildings();
   document.getElementById('add-success').style.display='block';
   setTimeout(()=>{document.getElementById('add-success').style.display='none';closeAddModal();},1800);
 }
@@ -2191,6 +2191,7 @@ function saveEditItem(){
   }
   renderQuickOverview(); renderKPIs(); renderDashboardCharts();
   renderAlerts(); renderIssuanceHistory(); renderConsumptionPct();
+  renderBuildings();
 
   // Persist to Firebase
   fbSaveItem(type, item).catch(e=>console.error('Edit item save error:',e));
