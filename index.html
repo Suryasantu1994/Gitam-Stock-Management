@@ -1218,8 +1218,12 @@ function parseDate(str){
 // RENDER CHEMICALS TABLE
 // ============================================================
 function renderChemicals(data){
+  const bkeys=['AB1','AB2','VS','NBH','SBH','GH','Garden'];
   const tbody=document.getElementById('chem-body');
   tbody.innerHTML=data.map((c,idx)=>{
+    c.totalIssued = bkeys.reduce((s,k)=>s+(c.issued[k]||0),0);
+    c.balance     = c.opening - c.totalIssued;
+    c.totalValue  = c.opening * c.rate;
     const s=getStatus(c);
     return`<tr>
       <td>${idx+1}</td><td class="item-name">${c.name}</td><td>${c.uom}</td>
@@ -1253,8 +1257,12 @@ function renderChemicals(data){
 }
 
 function renderTools(data){
+  const bkeys=['AB1','AB2','VS','NBH','SBH','GH','Garden'];
   const tbody=document.getElementById('tools-body');
   tbody.innerHTML=data.map((t,idx)=>{
+    t.totalIssued = bkeys.reduce((s,k)=>s+(t.issued[k]||0),0);
+    t.balance     = t.opening - t.totalIssued;
+    t.totalValue  = t.opening * t.rate;
     const s=getStatus(t);
     return`<tr>
       <td>${idx+1}</td><td class="item-name">${t.name}</td><td>${t.uom}</td>
@@ -1319,6 +1327,8 @@ function deleteStock(type, id){
   const idx = arr.findIndex(x=>x.id===id);
   if(idx===-1) return;
   arr.splice(idx,1);
+  // Persist deletion to Firebase so item doesn't return on refresh
+  fbDeleteItem(type, item).catch(e=>console.error('Delete Firebase error:',e));
   // Re-render everything
   renderChemicals(chemicals); renderTools(tools);
   renderBuildings(); renderAlerts(); renderKPIs();
@@ -1328,9 +1338,14 @@ function deleteStock(type, id){
 }
 
 function filterTable(type){
+  const bkeys=['AB1','AB2','VS','NBH','SBH','GH','Garden'];
   const search=document.getElementById(type+'-search').value.toLowerCase();
   const status=document.getElementById(type+'-status-filter').value;
   const data=type==='chem'?chemicals:tools;
+  data.forEach(item=>{
+    item.totalIssued = bkeys.reduce((s,k)=>s+(item.issued[k]||0),0);
+    item.balance     = item.opening - item.totalIssued;
+  });
   const filtered=data.filter(item=>{
     return item.name.toLowerCase().includes(search)&&(!status||getStatus(item)===status);
   });
@@ -2064,9 +2079,10 @@ function saveNewItem(){
   const totalValue=opening*rate;
   const arr=type==='chem'?chemicals:tools;
   const newId=arr.length>0?Math.max(...arr.map(x=>x.id))+1:1;
-  arr.push({id:newId,name,uom,rate,opening,totalValue,issued,totalIssued,balance});
-  // Persist to Firebase
-  fbSaveItem(type, {id:newId,name,uom,rate,opening,totalValue,issued,totalIssued,balance})
+  const newItem={id:newId,name,uom,rate,opening,totalValue,issued,totalIssued,balance};
+  arr.push(newItem);
+  // Persist to Firebase — fbSaveItem stamps _fbKey onto newItem
+  fbSaveItem(type, newItem)
     .catch(e=>{
       console.error('New item save error:',e);
       showToast('\u26a0\ufe0f Item added locally but failed to save to cloud. Check connection.', true);
@@ -2075,15 +2091,15 @@ function saveNewItem(){
   if(type==='chem'){
     document.getElementById('chem-search').value='';
     document.getElementById('chem-status-filter').value='';
-    filterTable('chem');
+    renderChemicals(chemicals);
     renderQuickOverview();
   }else{
     document.getElementById('tools-search').value='';
     document.getElementById('tools-status-filter').value='';
-    filterTable('tools');
+    renderTools(tools);
     renderQuickOverview();
   }
-  renderKPIs();renderDashboardCharts();renderAlerts();renderBuildings();
+  renderBuildings(); renderKPIs();renderDashboardCharts();renderAlerts();
   document.getElementById('add-success').style.display='block';
   setTimeout(()=>{document.getElementById('add-success').style.display='none';closeAddModal();},1800);
 }
@@ -2183,15 +2199,14 @@ function saveEditItem(){
   if(type==='chem'){
     document.getElementById('chem-search').value='';
     document.getElementById('chem-status-filter').value='';
-    filterTable('chem');
+    renderChemicals(chemicals);
   } else {
     document.getElementById('tools-search').value='';
     document.getElementById('tools-status-filter').value='';
-    filterTable('tools');
+    renderTools(tools);
   }
-  renderQuickOverview(); renderKPIs(); renderDashboardCharts();
+  renderBuildings(); renderQuickOverview(); renderKPIs(); renderDashboardCharts();
   renderAlerts(); renderIssuanceHistory(); renderConsumptionPct();
-  renderBuildings();
 
   // Persist to Firebase
   fbSaveItem(type, item).catch(e=>console.error('Edit item save error:',e));
@@ -3122,6 +3137,7 @@ const DOC_META        = 'gitam_stock_meta/config';
 
 async function fbSaveItem(type, item){
   const key = type+'_'+item.id;
+  item._fbKey = key;
   await db.doc(`${COL_ITEMS}/${key}`).set({
     type, id: item.id,
     issued:      item.issued,
@@ -3132,8 +3148,14 @@ async function fbSaveItem(type, item){
     rate:        item.rate,
     opening:     item.opening,
     totalValue:  item.totalValue,
-    stockOrder:  item.stockOrder||0
+    stockOrder:  item.stockOrder||0,
+    deleted:     false
   });
+}
+
+async function fbDeleteItem(type, item){
+  const key = item._fbKey || (type+'_'+item.id);
+  await db.doc(`${COL_ITEMS}/${key}`).set({ deleted: true }, { merge: true });
 }
 
 async function fbSaveMeta(){
@@ -3144,11 +3166,29 @@ async function fbSaveMeta(){
 async function loadFromFirebase(){
   // 1. Stock item overrides (issued, balance etc.)
   const itemSnap = await db.collection(COL_ITEMS).get();
+
+  // Collect deleted doc keys first
+  const deletedKeys = new Set();
+  itemSnap.forEach(doc => { if(doc.data().deleted === true) deletedKeys.add(doc.id); });
+
+  // Remove hardcoded items whose Firebase doc is marked deleted
+  deletedKeys.forEach(key => {
+    const parts = key.split('_'); // e.g. "chem_5"
+    const type  = parts[0];
+    const id    = parseInt(parts.slice(1).join('_'));
+    const arr   = type === 'chem' ? chemicals : tools;
+    const idx   = arr.findIndex(x => x.id === id);
+    if(idx !== -1) arr.splice(idx, 1);
+  });
+
+  // Apply Firebase data — update existing hardcoded items or push new ones
   itemSnap.forEach(doc => {
     const d = doc.data();
-    const arr = d.type === 'chem' ? chemicals : tools;
+    if(d.deleted === true) return; // skip deleted
+    const arr  = d.type === 'chem' ? chemicals : tools;
     const item = arr.find(x => x.id === d.id);
     if(item){
+      item._fbKey     = doc.id;
       item.issued      = d.issued      ?? item.issued;
       item.totalIssued = d.totalIssued ?? item.totalIssued;
       item.balance     = d.balance     ?? item.balance;
@@ -3159,8 +3199,9 @@ async function loadFromFirebase(){
       item.totalValue  = d.totalValue  ?? item.totalValue;
       item.stockOrder  = d.stockOrder  ?? item.stockOrder ?? 0;
     } else {
-      // New item added dynamically (not in hardcoded data) — push it into the array
+      // New item added dynamically (not in hardcoded data) — push it
       arr.push({
+        _fbKey:     doc.id,
         id:         d.id,
         name:       d.name        || '',
         uom:        d.uom         || '',
@@ -3174,6 +3215,16 @@ async function loadFromFirebase(){
       });
     }
   });
+
+  // ── Deduplicate both arrays by id (keep last seen = Firebase version) ──
+  function dedupById(arr){
+    const seen = new Map();
+    arr.forEach(item => seen.set(item.id, item));
+    arr.length = 0;
+    seen.forEach(item => arr.push(item));
+  }
+  dedupById(chemicals);
+  dedupById(tools);
 
   // 2. Issuance log
   const logSnap = await db.collection(COL_ISSUANCE).orderBy('createdAt').get();
