@@ -223,27 +223,170 @@ th.bldg-th{min-width:60px;max-width:70px;white-space:normal;text-align:center;ve
 .cal-sum-row:last-child{border-bottom:none;}
 
 /* ── REQUISITION ── */
-.req-form-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 26px;margin-bottom:18px;border-top:3px solid var(--gold);}
-.req-form-card h2{font-family:'Playfair Display',serif;font-size:1rem;color:var(--primary);margin-bottom:4px;}
-.req-form-card p.req-sub{font-size:.78rem;color:var(--text-light);margin-bottom:18px;}
-.req-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
-.req-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-.req-label{font-size:.68rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;}
-.req-input,.req-select,.req-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--sand-dark);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text-dark);background:var(--white);outline:none;transition:border-color .2s;}
-.req-input:focus,.req-select:focus,.req-textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(11,82,64,.08);}
-.req-textarea{resize:vertical;min-height:68px;}
-.req-items-table{width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:10px;}
-.req-items-table thead th{background:var(--primary);color:#fff;padding:9px 12px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;font-weight:600;}
-.req-items-table thead th:first-child{border-radius:7px 0 0 0;}
-.req-items-table thead th:last-child{border-radius:0 7px 0 0;}
+/* ── REQUISITION FORM CARD ── */
+.req-form-card{
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border-top:3px solid var(--gold);
+  overflow:hidden;
+}
+.req-form-header{
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--sand-dark);
+  background:linear-gradient(to right,var(--white),#fffdf8);
+}
+.req-form-header h2{
+  font-family:'Playfair Display',serif;
+  font-size:1.08rem;
+  color:var(--primary);
+  margin-bottom:3px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.req-form-header p.req-sub{font-size:.78rem;color:var(--text-light);margin:0;}
+.req-form-body{padding:20px 24px;}
+
+/* Section dividers inside form */
+.req-section-lbl{
+  font-size:.65rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--primary-mid);
+  padding:0 0 6px;
+  border-bottom:1px solid var(--sand-dark);
+  margin-bottom:12px;
+  margin-top:4px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.req-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.req-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.req-grid .span-2{grid-column:1/-1;}
+
+.req-label{font-size:.68rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;}
+.req-input,.req-select,.req-textarea{
+  width:100%;
+  padding:9px 12px;
+  border:1.5px solid var(--sand-dark);
+  border-radius:7px;
+  font-family:'DM Sans',sans-serif;
+  font-size:.88rem;
+  color:var(--text-dark);
+  background:var(--white);
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.req-input:focus,.req-select:focus,.req-textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(11,82,64,.08);
+}
+.req-textarea{resize:vertical;min-height:72px;}
+
+/* Items table */
+.req-items-wrap{border:1.5px solid var(--sand-dark);border-radius:9px;overflow:hidden;margin-bottom:12px;}
+.req-items-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.req-items-table thead th{
+  background:var(--primary);
+  color:#fff;
+  padding:9px 10px;
+  text-align:left;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  font-weight:600;
+  white-space:nowrap;
+}
 .req-items-table tbody tr{border-bottom:1px solid var(--sand-dark);}
+.req-items-table tbody tr:last-child{border-bottom:none;}
 .req-items-table tbody tr:hover td{background:var(--primary-light);}
-.req-items-table tbody td{padding:8px 10px;vertical-align:middle;}
-.req-item-input{width:100%;padding:6px 9px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text-dark);background:var(--white);outline:none;transition:border-color .2s;}
-.req-item-input:focus{border-color:var(--primary);}
-.req-del-btn{background:#fde8e8;border:none;color:var(--danger);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}
+.req-items-table tbody td{padding:7px 8px;vertical-align:middle;}
+.req-items-table tbody td input,.req-items-table tbody td select{
+  width:100%;
+  padding:6px 8px;
+  border:1.5px solid var(--sand-dark);
+  border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:.82rem;
+  color:var(--text-dark);
+  background:var(--white);
+  outline:none;
+  transition:border-color .2s;
+}
+.req-items-table tbody td input:focus,.req-items-table tbody td select:focus{border-color:var(--primary);}
+.req-items-empty{text-align:center;padding:18px;color:var(--text-light);font-size:.82rem;font-style:italic;background:var(--sand);}
+.req-del-btn{
+  background:#fde8e8;
+  border:none;
+  color:var(--danger);
+  width:26px;height:26px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+  flex-shrink:0;
+}
 .req-del-btn:hover{background:var(--danger);color:#fff;}
-.req-add-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+
+/* Add row + footer actions */
+.req-add-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;
+  background:var(--sand);
+  border-top:1px solid var(--sand-dark);
+}
+.req-form-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  padding:16px 24px;
+  border-top:1px solid var(--sand-dark);
+  background:#fafaf8;
+}
+
+.req-form-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  padding:16px 24px;
+  border-top:1px solid var(--sand-dark);
+  background:#fafaf8;
+}
+
+/* ── REQUISITION LAYOUT ── */
+.req-layout{
+  display:grid;
+  grid-template-columns:minmax(0,440px) 1fr;
+  gap:18px;
+  align-items:start;
+}
+
+/* Responsive breakpoints */
+@media(max-width:900px){
+  .req-layout{grid-template-columns:1fr;}
+  .req-kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:600px){
+  .req-layout{gap:14px;}
+  .req-grid{grid-template-columns:1fr;}
+  .req-grid .span-2{grid-column:auto;}
+  .req-form-header{padding:16px 16px 12px;}
+  .req-form-body{padding:16px 16px;}
+  .req-form-actions{padding:12px 16px;flex-wrap:wrap;}
+  .req-form-actions .btn{flex:1;justify-content:center;}
+  .req-items-table thead th:nth-child(2),.req-items-table tbody td:nth-child(2){display:none;}
+  .req-kpi-row{grid-template-columns:repeat(2,1fr);}
+  .req-tracker-filters{flex-direction:column;align-items:stretch;}
+  .req-tracker-filters input,.req-tracker-filters select{width:100%;}
+}
+@media(max-width:400px){
+  .req-kpi-row{grid-template-columns:1fr 1fr;}
+}
 .req-urgency{display:flex;gap:8px;flex-wrap:wrap;}
 .req-urg-opt{display:none;}
 .edit-stock-btn{background:transparent;border:1.5px solid var(--primary-mid);color:var(--primary);border-radius:6px;padding:3px 8px;font-size:.75rem;cursor:pointer;transition:all .15s;}
@@ -880,70 +1023,88 @@ body.role-user  .user-hidden{display:none!important;}
       <div class="req-kpi-row" id="req-kpi-row"></div>
 
       <!-- Two-column layout: form left, tracker right -->
-      <div style="display:grid;grid-template-columns:420px 1fr;gap:18px;align-items:start">
+      <div class="req-layout">
 
         <!-- ── REQUISITION FORM ── -->
         <div class="req-form-card">
-          <h2>📝 New Requisition</h2>
-          <p class="req-sub">Fill in the request details and add items needed</p>
 
-          <div class="req-success-banner" id="req-success-banner">
+          <!-- Form header -->
+          <div class="req-form-header">
+            <h2>📝 New Requisition</h2>
+            <p class="req-sub">Fill in the request details and add the items needed</p>
+          </div>
+
+          <!-- Success banner -->
+          <div class="req-success-banner" id="req-success-banner" style="margin:16px 24px 0;border-radius:8px;">
             <span>✅</span>
             <span>Requisition submitted successfully!</span>
           </div>
 
-          <div class="req-grid">
-            <div>
-              <label class="req-label">Building *</label>
-              <select class="req-select" id="req-building">
-                <option value="">— Select —</option>
-                <option value="AB1">AB 1 — Vishvesvaraya Bhavan</option>
-                <option value="AB2">AB 2 — Shivaji Bhavan</option>
-                <option value="VS">Vinay Sadan + Staff Quarters</option>
-                <option value="NBH">North Boys Hostel</option>
-                <option value="SBH">South Girls Hostel</option>
-                <option value="GH">Guest House</option>
-                <option value="Garden">Garden</option>
-              </select>
-            </div>
-            <div>
-              <label class="req-label">Request Date *</label>
-              <input type="date" class="req-input" id="req-date">
-            </div>
-            <div>
-              <label class="req-label">Requested By *</label>
-              <input type="text" class="req-input" id="req-by" placeholder="Name / designation">
-            </div>
-          </div>
+          <!-- Form body -->
+          <div class="req-form-body">
 
-          <!-- Items table -->
-          <label class="req-label" style="margin-bottom:8px;display:block">Requested Items *</label>
-          <table class="req-items-table">
-            <thead>
-              <tr>
-                <th style="width:40%">Item Name</th>
-                <th style="width:20%">Category</th>
-                <th style="width:18%">Qty Needed</th>
-                <th style="width:14%">UOM</th>
-                <th style="width:8%"></th>
-              </tr>
-            </thead>
-            <tbody id="req-items-body"></tbody>
-          </table>
-          <div class="req-add-row">
-            <button class="btn btn-outline" style="font-size:.78rem;padding:6px 13px" onclick="addReqItemRow()">➕ Add Item</button>
-            <span style="font-size:.72rem;color:var(--text-light)">Add one row per item</span>
-          </div>
+            <!-- Section: Request Info -->
+            <div class="req-section-lbl">🏢 Request Information</div>
+            <div class="req-grid" style="margin-bottom:12px;">
+              <div>
+                <label class="req-label">Building *</label>
+                <select class="req-select" id="req-building">
+                  <option value="">— Select Building —</option>
+                  <option value="AB1">AB 1 — Vishvesvaraya Bhavan</option>
+                  <option value="AB2">AB 2 — Shivaji Bhavan</option>
+                  <option value="VS">Vinay Sadan + Staff Quarters</option>
+                  <option value="NBH">North Boys Hostel</option>
+                  <option value="SBH">South Girls Hostel</option>
+                  <option value="GH">Guest House</option>
+                  <option value="Garden">Garden</option>
+                </select>
+              </div>
+              <div>
+                <label class="req-label">Request Date *</label>
+                <input type="date" class="req-input" id="req-date">
+              </div>
+              <div class="span-2">
+                <label class="req-label">Requested By *</label>
+                <input type="text" class="req-input" id="req-by" placeholder="Name / designation">
+              </div>
+            </div>
 
-          <div style="margin-bottom:14px">
-            <label class="req-label">Notes / Justification</label>
-            <textarea class="req-textarea" id="req-notes" placeholder="Any additional context or justification..."></textarea>
-          </div>
+            <!-- Section: Items -->
+            <div class="req-section-lbl" style="margin-top:18px;">📦 Requested Items *</div>
+            <div class="req-items-wrap">
+              <table class="req-items-table">
+                <thead>
+                  <tr>
+                    <th style="width:38%">Item Name</th>
+                    <th style="width:22%">Category</th>
+                    <th style="width:18%">Qty Needed</th>
+                    <th style="width:16%">UOM</th>
+                    <th style="width:6%;text-align:center"></th>
+                  </tr>
+                </thead>
+                <tbody id="req-items-body"></tbody>
+              </table>
+              <div class="req-add-row">
+                <button class="btn btn-outline" style="font-size:.78rem;padding:5px 13px" onclick="addReqItemRow()">➕ Add Item</button>
+                <span style="font-size:.72rem;color:var(--text-light)">One row per item</span>
+              </div>
+            </div>
 
-          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <!-- Section: Notes -->
+            <div class="req-section-lbl" style="margin-top:18px;">📝 Notes</div>
+            <div>
+              <label class="req-label">Justification / Remarks</label>
+              <textarea class="req-textarea" id="req-notes" placeholder="Any additional context or justification..."></textarea>
+            </div>
+
+          </div><!-- /req-form-body -->
+
+          <!-- Form actions -->
+          <div class="req-form-actions">
             <button class="btn btn-outline" onclick="resetReqForm()">↺ Reset</button>
             <button class="btn btn-primary" onclick="submitRequisition()">📤 Submit Requisition</button>
           </div>
+
         </div>
 
         <!-- ── TRACKER ── -->
@@ -2783,7 +2944,7 @@ function showToast(msg){
 // REQUISITIONS
 // ============================================================
 const BLDG_NAMES = {AB1:'AB 1 — Vishvesvaraya Bhavan',AB2:'AB 2 — Shivaji Bhavan',VS:'Vinay Sadan + Staff Quarters',NBH:'North Boys Hostel',SBH:'South Girls Hostel',GH:'Guest House',Garden:'Garden'};
-const ITEM_CATALOG = [...chemicals.map(c=>({name:c.name,cat:'Chemical',uom:c.uom})),...tools.map(t=>({name:t.name,cat:'Tool',uom:t.uom}))];
+function getItemCatalog(){ return [...chemicals.map(c=>({name:c.name,cat:'Chemical',uom:c.uom})),...tools.map(t=>({name:t.name,cat:'Tool',uom:t.uom}))]; }
 
 function loadRequisitions(){
   return requisitionsCache;
@@ -2800,7 +2961,7 @@ function saveRequisitions(list){
 function buildItemDatalist(){
   let dl = document.getElementById('req-item-datalist');
   if(!dl){ dl=document.createElement('datalist'); dl.id='req-item-datalist'; document.body.appendChild(dl); }
-  dl.innerHTML = ITEM_CATALOG.map(i=>`<option value="${i.name}">`).join('');
+  dl.innerHTML = getItemCatalog().map(i=>`<option value="${i.name}">`).join('');
 }
 
 // ── Item rows ─────────────────────────────────────────────
@@ -2815,15 +2976,15 @@ function addReqItemRow(name='',cat='Chemical',qty='',uom=''){
       <option value="Tool"${cat==='Tool'?' selected':''}>Tool</option>
       <option value="Other"${cat==='Other'?' selected':''}>Other</option>
     </select></td>
-    <td><input class="req-item-input" type="number" min="1" placeholder="Qty" value="${qty}" style="width:70px"></td>
-    <td><input class="req-item-input" placeholder="UOM" value="${uom}" style="width:70px"></td>
+    <td><input class="req-item-input" type="number" min="1" placeholder="Qty" value="${qty}"></td>
+    <td><input class="req-item-input" placeholder="UOM" value="${uom}"></td>
     <td><button class="req-del-btn" onclick="this.closest('tr').remove()" title="Remove">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
 function autoFillRow(input){
   const val = input.value.trim();
-  const found = ITEM_CATALOG.find(i=>i.name.toLowerCase()===val.toLowerCase());
+  const found = getItemCatalog().find(i=>i.name.toLowerCase()===val.toLowerCase());
   if(found){
     const tr = input.closest('tr');
     tr.querySelectorAll('select')[0].value = found.cat;
