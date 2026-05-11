@@ -2365,59 +2365,68 @@ function renderIssuanceHistory(){
     return;
   }
 
-  container.innerHTML = log.map(entry => {
+  // Flatten: one row per item line
+  let rowNum = 0;
+  let grandQty = 0, grandVal = 0;
+  const rows = log.map(entry => {
     const bldg = buildings.find(b => b.key === entry.bldgKey);
     const bldgName = bldg ? bldg.name : entry.bldgKey;
     const isReq = entry.source === 'requisition';
     const srcBadge = isReq
-      ? `<span style="background:#d4f4e2;color:#1a6e3c;border-radius:20px;padding:2px 9px;font-size:.68rem;font-weight:700;margin-left:8px">📋 From ${entry.reqId||'Requisition'}</span>`
-      : `<span style="background:var(--primary-light);color:var(--primary);border-radius:20px;padding:2px 9px;font-size:.68rem;font-weight:700;margin-left:8px">✏️ Manual</span>`;
-    const totalQty = entry.items.reduce((s,it)=>s+it.qty,0);
-    const totalVal = entry.items.reduce((s,it)=>s+it.qty*it.rate,0);
-    const itemRows = entry.items.map((it,i)=>`
-      <tr>
-        <td style="padding:6px 10px;color:var(--text-light);font-size:.75rem">${i+1}</td>
-        <td style="padding:6px 10px;font-weight:600;font-size:.8rem;color:var(--text-dark)">${it.name}</td>
-        <td style="padding:6px 10px;font-size:.75rem"><span style="background:${it.cat==='Chem'?'var(--primary-light)':'#f3e5f5'};color:${it.cat==='Chem'?'var(--primary-mid)':'#7b1fa2'};border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:700">${it.cat==='Chem'?'Chemical':'Tool'}</span></td>
-        <td style="padding:6px 10px;text-align:right;font-weight:700;font-size:.8rem">${fmt(it.qty)}</td>
-        <td style="padding:6px 10px;text-align:right;font-size:.75rem;color:var(--text-light)">${fmtR(it.rate)}</td>
-        <td style="padding:6px 10px;text-align:right;font-weight:600;font-size:.8rem;color:var(--primary)">${fmtR(it.qty*it.rate)}</td>
-      </tr>`).join('');
-    return `
-      <div style="border:1px solid var(--sand-dark);border-radius:9px;margin-bottom:12px;overflow:hidden;${isReq?'border-left:4px solid var(--success)':'border-left:4px solid var(--primary-mid)'}">
-        <div style="background:${isReq?'#f0faf4':'var(--primary-light)'};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <div>
-            <span style="font-weight:700;font-size:.88rem;color:var(--primary)">${bldgName}</span>
-            ${srcBadge}
-          </div>
-          <div style="display:flex;align-items:center;gap:16px;font-size:.75rem;color:var(--text-mid)">
-            <span>📅 ${entry.date}</span>
-            <span>📦 ${entry.items.length} item(s)</span>
-            <span style="font-weight:700;color:var(--primary)">Qty: ${fmt(totalQty)}</span>
-            <span style="font-weight:700;color:var(--gold)">${fmtR(totalVal)}</span>
-          </div>
-        </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:rgba(11,82,64,.06)">
-              <th style="padding:6px 10px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">#</th>
-              <th style="padding:6px 10px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">Item</th>
-              <th style="padding:6px 10px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">Category</th>
-              <th style="padding:6px 10px;text-align:right;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">Qty</th>
-              <th style="padding:6px 10px;text-align:right;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">Rate</th>
-              <th style="padding:6px 10px;text-align:right;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);font-weight:700">Value</th>
-            </tr></thead>
-            <tbody>${itemRows}</tbody>
-            <tfoot><tr style="background:rgba(11,82,64,.04);border-top:2px solid var(--sand-dark)">
-              <td colspan="3" style="padding:7px 10px;font-weight:700;font-size:.8rem">Total</td>
-              <td style="padding:7px 10px;text-align:right;font-weight:700;font-size:.85rem">${fmt(totalQty)}</td>
-              <td></td>
-              <td style="padding:7px 10px;text-align:right;font-weight:700;font-size:.85rem;color:var(--gold)">${fmtR(totalVal)}</td>
-            </tfoot>
-          </table>
-        </div>
-      </div>`;
+      ? `<span style="background:#d4f4e2;color:#1a6e3c;border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:700">📋 ${entry.reqId||'Req'}</span>`
+      : `<span style="background:var(--primary-light);color:var(--primary);border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:700">✏️ Manual</span>`;
+    const entryBg = isReq ? 'rgba(39,174,96,.04)' : 'transparent';
+
+    return entry.items.map((it, i) => {
+      rowNum++;
+      const val = it.qty * it.rate;
+      grandQty += it.qty;
+      grandVal += val;
+      const catBadge = `<span style="background:${it.cat==='Chem'?'var(--primary-light)':'#f3e5f5'};color:${it.cat==='Chem'?'var(--primary-mid)':'#7b1fa2'};border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:700">${it.cat==='Chem'?'Chemical':'Tool'}</span>`;
+      // Only show date/building/source on first item of each entry group
+      const isFirst = i === 0;
+      const rowspan = entry.items.length;
+      return `<tr style="background:${entryBg};border-bottom:1px solid var(--sand-dark)">
+        <td style="padding:8px 10px;color:var(--text-light);font-size:.72rem;text-align:center">${rowNum}</td>
+        ${isFirst ? `<td style="padding:8px 10px;font-size:.78rem;white-space:nowrap;vertical-align:top" rowspan="${rowspan}">${entry.date}</td>` : ''}
+        ${isFirst ? `<td style="padding:8px 10px;font-weight:700;color:var(--primary);font-size:.8rem;vertical-align:top;white-space:nowrap;max-width:160px" rowspan="${rowspan}">${bldgName}</td>` : ''}
+        ${isFirst ? `<td style="padding:8px 10px;vertical-align:top" rowspan="${rowspan}">${srcBadge}</td>` : ''}
+        <td style="padding:8px 10px;font-weight:600;color:var(--text-dark);font-size:.82rem;white-space:normal;max-width:180px">${it.name}</td>
+        <td style="padding:8px 10px">${catBadge}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:700;font-size:.82rem">${fmt(it.qty)}</td>
+        <td style="padding:8px 10px;text-align:right;font-size:.75rem;color:var(--text-light)">${fmtR(it.rate)}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:600;font-size:.82rem;color:var(--primary)">${fmtR(val)}</td>
+      </tr>`;
+    }).join('');
   }).join('');
+
+  container.innerHTML = `
+    <div style="overflow-x:auto;max-height:480px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead style="position:sticky;top:0;z-index:10">
+          <tr>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:center;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;border-radius:8px 0 0 0">#</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Date</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Building</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Source</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px">Item</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Category</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:right;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Qty</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:right;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Rate (₹)</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:right;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;border-radius:0 8px 0 0">Value (₹)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr style="background:var(--gold-light);position:sticky;bottom:0">
+            <td colspan="6" style="padding:9px 10px;font-weight:700;color:var(--gold);font-size:.82rem">Grand Total</td>
+            <td style="padding:9px 10px;text-align:right;font-weight:700;color:var(--gold);font-size:.85rem">${fmt(grandQty)}</td>
+            <td></td>
+            <td style="padding:9px 10px;text-align:right;font-weight:700;color:var(--gold);font-size:.85rem">${fmtR(grandVal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
 }
 
 function clearIssuance(){
@@ -2921,44 +2930,61 @@ function renderRequisitions(){
     return;
   }
 
-  container.innerHTML = list.map(r=>{
-    const itemChips = r.items.map(i=>`<span class="req-item-chip">${i.name} × ${i.qty} ${i.uom||''}</span>`).join('');
+  const isAdmin = currentRole === 'admin';
+
+  const rows = list.map((r, idx)=>{
+    const itemsText = r.items.map(i=>`${i.name} ×${i.qty}${i.uom?' '+i.uom:''}`).join('<br>');
+    const urgBadge = r.urgency ? `<span class="req-urgency-badge ${r.urgency}" style="margin-left:5px">${r.urgency}</span>` : '';
+    const notesTip = (r.notes||r.adminNote) ? `<span title="${[r.notes?'💬 '+r.notes:'', r.adminNote?'🗒 Admin: '+r.adminNote:''].filter(Boolean).join('\n')}" style="cursor:help;font-size:.85rem">💬</span>` : '';
+    const autoIssued = r.status==='Approved'
+      ? `<span title="Stock auto-issued on approval" style="cursor:help;font-size:.82rem;color:var(--success)">📤</span>` : '';
+
     const canApprove = r.status!=='Approved';
     const canReject  = r.status!=='Rejected';
     const canPending = r.status!=='Pending';
-    const isAdmin = currentRole === 'admin';
     const actionBtns = isAdmin ? `
-      ${canApprove?`<button class="req-action-btn approve" onclick="setReqStatus('${r.id}','Approved')">✅ Approve</button>`:''}
-      ${canReject?`<button class="req-action-btn reject" onclick="setReqStatus('${r.id}','Rejected')">❌ Reject</button>`:''}
-      ${canPending?`<button class="req-action-btn pending" onclick="setReqStatus('${r.id}','Pending')">⏳ Reset</button>`:''}
-      <button class="req-action-btn delete" onclick="deleteRequisition('${r.id}')">🗑</button>`
-    : `<span style="font-size:.75rem;color:var(--text-light);font-style:italic">Awaiting admin review</span>`;
-    const notesHtml = r.notes?`<div class="req-notes-mini">💬 ${r.notes}</div>`:'';
-    const adminNote = r.adminNote?`<div class="req-notes-mini" style="color:var(--primary);font-style:normal">🗒 Admin: ${r.adminNote}</div>`:'';
-    const autoIssuedBadge = r.status==='Approved'
-      ? `<div class="req-notes-mini" style="color:var(--success);font-style:normal;font-weight:600;border-top:1px solid #a8e6c0;padding-top:8px;margin-top:8px">
-           📤 Stock auto-issued to Issue Stock on approval
-           <button class="req-action-btn approve" style="margin-left:10px;font-size:.68rem;padding:3px 10px" onclick="showView('issuance',document.querySelector('[data-view=\\'issuance\\']'))">View Issue Log →</button>
-         </div>`
-      : '';
-    return `
-      <div class="req-card status-${r.status}">
-        <div class="req-card-header">
-          <div>
-            <div class="req-card-id">${r.id}</div>
-            <div class="req-card-title">${r.bldgName}</div>
-            <div class="req-card-meta">
-              <span>📅 ${r.date}</span>
-              <span>👤 ${r.requestedBy}</span>
-            </div>
-          </div>
-          <div><span class="req-status-badge ${r.status}">${r.status}</span></div>
-        </div>
-        <div class="req-items-mini">${itemChips}</div>
-        ${notesHtml}${adminNote}${autoIssuedBadge}
-        <div class="req-card-actions">${actionBtns}</div>
-      </div>`;
+      <div style="display:flex;gap:4px;flex-wrap:wrap;min-width:130px">
+        ${canApprove?`<button class="req-action-btn approve" style="padding:3px 8px;font-size:.68rem" onclick="setReqStatus('${r.id}','Approved')">✅</button>`:''}
+        ${canReject?`<button class="req-action-btn reject" style="padding:3px 8px;font-size:.68rem" onclick="setReqStatus('${r.id}','Rejected')">❌</button>`:''}
+        ${canPending?`<button class="req-action-btn pending" style="padding:3px 8px;font-size:.68rem" onclick="setReqStatus('${r.id}','Pending')">⏳</button>`:''}
+        <button class="req-action-btn delete" style="padding:3px 8px;font-size:.68rem" onclick="deleteRequisition('${r.id}')">🗑</button>
+      </div>`
+    : `<span style="font-size:.72rem;color:var(--text-light);font-style:italic">Pending review</span>`;
+
+    const rowBg = r.status==='Approved' ? 'rgba(39,174,96,.05)' : r.status==='Rejected' ? 'rgba(192,57,43,.05)' : 'rgba(230,126,34,.04)';
+    return `<tr style="background:${rowBg}">
+      <td style="text-align:center;color:var(--text-light);font-size:.75rem">${idx+1}</td>
+      <td style="font-size:.72rem;font-weight:700;color:var(--text-light);white-space:nowrap">${r.id}</td>
+      <td style="font-weight:700;color:var(--primary);white-space:nowrap">${r.bldgName}</td>
+      <td style="white-space:nowrap;font-size:.8rem">${r.date}</td>
+      <td style="font-size:.8rem">${r.requestedBy||'—'}</td>
+      <td style="font-size:.78rem;color:var(--text-mid);max-width:220px;white-space:normal;line-height:1.5">${itemsText}</td>
+      <td style="white-space:nowrap">
+        <span class="req-status-badge ${r.status}">${r.status}</span>
+        ${urgBadge}${notesTip}${autoIssued}
+      </td>
+      <td>${actionBtns}</td>
+    </tr>`;
   }).join('');
+
+  container.innerHTML = `
+    <div class="table-wrap" style="max-height:520px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead style="position:sticky;top:0;z-index:10">
+          <tr>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:center;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;border-radius:8px 0 0 0">#</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Req ID</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Building</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Date</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Requested By</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px">Items</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Status</th>
+            <th style="background:var(--primary);color:#fff;padding:9px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;border-radius:0 8px 0 0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
 // ── Status change ──────────────────────────────────────────
@@ -2972,6 +2998,7 @@ function setReqStatus(id, status){
   // Persist to Firebase
   db.doc(`${COL_REQUISITIONS}/${id}`).update({status, updatedAt: r.updatedAt}).catch(e=>console.error('Req update error:',e));
   renderRequisitions();
+  renderKPIs(); renderDashboardCharts(); renderQuickOverview();
   showToast(`${status==='Approved'?'✅':'❌'} Requisition ${id} marked as ${status}`);
 
   // ── Auto-send to Issue Stock on approval ──────────────────
@@ -3081,6 +3108,7 @@ function deleteRequisition(id){
   requisitionsCache = loadRequisitions().filter(r=>r.id!==id);
   db.doc(`${COL_REQUISITIONS}/${id}`).delete().catch(e=>console.error('Req delete error:',e));
   renderRequisitions();
+  renderKPIs(); renderDashboardCharts(); renderQuickOverview();
   showToast('🗑 Requisition deleted');
 }
 
@@ -3092,6 +3120,7 @@ function clearAllRequisitions(){
   batch.commit().catch(e=>console.error('Clear req error:',e));
   requisitionsCache = [];
   renderRequisitions();
+  renderKPIs(); renderDashboardCharts(); renderQuickOverview();
   showToast('🗑 All requisitions cleared');
 }
 
